@@ -11,7 +11,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v3.1.0 # Explicitly specify latest version compatible with Node.js 20
 
       - name: Set up SSH
         env:
