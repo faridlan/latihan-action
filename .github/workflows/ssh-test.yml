@@ -1,0 +1,33 @@
+name: SSH Test
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test-ssh-connection:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          # Create the SSH directory and add the private key
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+          # Add the SSH configuration for the Cloudflare tunnel
+          echo -e "Host my-server\n\tHostName ssh.example.com\n\tUser yourusername\n\tPort 22\n\tProxyCommand /usr/local/bin/cloudflared access ssh --hostname %h\n" >> ~/.ssh/config
+
+          # Add server to known hosts to avoid prompt
+          ssh-keyscan ssh.example.com >> ~/.ssh/known_hosts
+
+      - name: Test SSH Connection
+        run: |
+          ssh my-server "pwd"
