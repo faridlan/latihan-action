@@ -1,41 +1,20 @@
-name: SSH Test
-
 on:
   push:
     branches:
       - main
 
 jobs:
-  test-ssh-connection:
+  run_pull:
+    name: run pull
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install cloudflared
+      - name: install shh keys
         run: |
-          sudo apt-get update
-          sudo apt-get install -y wget
-          wget -O cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
-          sudo mv cloudflared /usr/local/bin/cloudflared
-          sudo chmod +x /usr/local/bin/cloudflared
-
-      - name: Set up SSH
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        run: |
-          # Create the SSH directory and add the private key
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-
-          # Add the SSH configuration for the Cloudflare tunnel
-          echo -e "Host my-server\n\tHostName ssh.faridlan.online\n\tUser nullhakim26\n\tPort 22\n\tProxyCommand /usr/local/bin/cloudflared access ssh --hostname %h\n" >> ~/.ssh/config
-
-          # Add server to known hosts to avoid prompt
-          ssh-keyscan ssh.faridlan.online >> ~/.ssh/known_hosts
-
-      - name: Test SSH Connection
-        run: |
-          ssh nullhakim26@ssh.faridlan.online "pwd"
+          install -m 600 -D /dev/null ~/.ssh/id_rsa
+          echo "${{secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          ssh keyscan -H ${{secrets.SSH_HOST}} > ~/.ssh/known_hosts
+      - name: connect and pull
+        run: ssh ${{secrets.SSH_USER}}@${{secrets.SSH_HOST}} "cd ${{secrets.WORK_DIR}} && git checkout ${{secrets.MAIN_BRANCH}} && git pull"
+      - name: cleanup
+        run: rm -rf ~./ssh
