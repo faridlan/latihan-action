@@ -23,7 +23,7 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
 
           # Add the SSH configuration for the Cloudflare tunnel
-          echo -e "Host my-server\n\tHostName ssh.example.com\n\tUser yourusername\n\tPort 22\n\tProxyCommand /usr/local/bin/cloudflared access ssh --hostname %h\n" >> ~/.ssh/config
+          echo -e "Host my-server\n\tHostName ssh.faridlan.online\n\tUser nullhakim26\n\tPort 22\n\tProxyCommand /usr/local/bin/cloudflared access ssh --hostname %h\n" >> ~/.ssh/config
 
           # Add server to known hosts to avoid prompt
           ssh-keyscan ssh.example.com >> ~/.ssh/known_hosts
