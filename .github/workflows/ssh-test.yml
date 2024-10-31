@@ -38,4 +38,4 @@ jobs:
 
       - name: Test SSH Connection
         run: |
-          ssh my-server "pwd"
+          ssh nullhakim26@ssh.faridlan.online "pwd"
