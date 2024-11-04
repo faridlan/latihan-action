@@ -1,20 +1,43 @@
+name: Connect to Server via Cloudflared Tunnel
+
 on:
   push:
     branches:
       - main
 
 jobs:
-  run_pull:
-    name: run pull
+  connect:
     runs-on: ubuntu-latest
 
     steps:
-      - name: install shh keys
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install cloudflared
         run: |
-          install -m 600 -D /dev/null ~/.ssh/id_rsa
-          echo "${{secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          ssh-keyscan -H ${{secrets.SSH_HOST}} > ~/.ssh/known_hosts
-      - name: connect and pull
-        run: ssh ${{secrets.SSH_USER}}@${{secrets.SSH_HOST}} "cd ${{secrets.WORK_DIR}} && git checkout ${{secrets.MAIN_BRANCH}} && git pull"
-      - name: cleanup
-        run: rm -rf ~./ssh
+          wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+          sudo mv cloudflared-linux-amd64 /usr/local/bin/cloudflared
+          sudo chmod +x /usr/local/bin/cloudflared
+
+      - name: Authenticate cloudflared
+        run: echo "${{ secrets.CLOUDFLARE_TOKEN }}" | cloudflared tunnel login
+
+      - name: Generate SSH Config using Cloudflared
+        run: |
+          mkdir -p ~/.ssh
+          cloudflared ssh-config --hostname ${{secrets.SSH_HOST}} > ~/.ssh/config
+
+      - name: Setup SSH key
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Add Server to Known Hosts
+        run: |
+          ssh-keyscan -H ${{secrets.SSH_HOST}} >> ~/.ssh/known_hosts
+
+      - name: Connect to Server and Run Commands
+        run: |
+          ssh ${{secrets.SSH_USER}}@${{secrets.SSH_HOST}} "echo 'Connected through Cloudflare tunnel!'; \
+          pwd
+          # Place any additional commands here"
