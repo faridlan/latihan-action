@@ -1,4 +1,4 @@
-name: Connect to Server via Cloudflared Tunnel
+name: Connect via Cloudflare Named Tunnel
 
 on:
   push:
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Install cloudflared
@@ -19,16 +19,18 @@ jobs:
           sudo mv cloudflared-linux-amd64 /usr/local/bin/cloudflared
           sudo chmod +x /usr/local/bin/cloudflared
 
-      - name: Authenticate cloudflared
-        run: echo "${{ secrets.CLOUDFLARE_TOKEN }}" | cloudflared tunnel login
-
-      - name: Generate SSH Config using Cloudflared
+      - name: Set up cloudflared credentials
         run: |
-          mkdir -p ~/.ssh
-          cloudflared ssh-config --hostname ${{secrets.SSH_HOST}} > ~/.ssh/config
+          mkdir -p ~/.cloudflared
+          echo "${{ secrets.CLOUDFLARE_TUNNEL_CREDENTIALS }}" > ~/.cloudflared/${{secrets.TUNNEL_ID}}.json
+
+      - name: Start Cloudflare Tunnel Replace with your Tunnel ID
+        run: |
+          cloudflared tunnel --credentials-file ~/.cloudflared/${{secrets.TUNNEL_ID}}.json run ${{secrets.TUNNEL_ID}} &
 
       - name: Setup SSH key
         run: |
+          mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
@@ -36,8 +38,6 @@ jobs:
         run: |
           ssh-keyscan -H ${{secrets.SSH_HOST}} >> ~/.ssh/known_hosts
 
-      - name: Connect to Server and Run Commands
+      - name: Run commands via SSH
         run: |
-          ssh ${{secrets.SSH_USER}}@${{secrets.SSH_HOST}} "echo 'Connected through Cloudflare tunnel!'; \
-          pwd
-          # Place any additional commands here"
+          ssh -o "ProxyCommand cloudflared access ssh --hostname %h" ${{secrets.SSH_USER}}@${{secrets.SSH_HOST}} "echo 'Connected via Cloudflare tunnel!'"
