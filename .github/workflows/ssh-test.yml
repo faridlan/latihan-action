@@ -47,3 +47,4 @@ jobs:
         run: |
           # Connect to the server through SSH using the Cloudflare tunnel
           ssh -o StrictHostKeyChecking=no $SERVER_USER@$TUNNEL_HOSTNAME "echo 'SSH connection successful'"
+          pwd
