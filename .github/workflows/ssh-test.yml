@@ -35,7 +35,7 @@ jobs:
           # Use cloudflared to generate SSH config and append to ~/.ssh/config
           cloudflared access ssh-config --hostname $TUNNEL_HOSTNAME >> ~/.ssh/config
 
-      - name: Test SSH connection
+      - name: Test SSH connection haha
         env:
           SERVER_USER: ${{secrets.SSH_USER}}
           TUNNEL_HOSTNAME: ${{secrets.SSH_HOST}}
