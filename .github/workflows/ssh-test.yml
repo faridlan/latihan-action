@@ -28,14 +28,18 @@ jobs:
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-      - name: Generate SSH config with cloudflared
+      - name: Generate and Clean SSH Config with cloudflared
         env:
           TUNNEL_HOSTNAME: ${{secrets.SSH_HOST}}
         run: |
-          # Use cloudflared to generate SSH config and append to ~/.ssh/config
-          cloudflared access ssh-config --hostname $TUNNEL_HOSTNAME >> ~/.ssh/config
+          # Capture SSH config from cloudflared into a temporary file
+          cloudflared access ssh-config --hostname $TUNNEL_HOSTNAME > temp_ssh_config
 
-      - name: Test SSH connection haha
+          # Filter out incompatible lines and append cleaned config to ~/.ssh/config
+          grep -v '^add ' temp_ssh_config >> ~/.ssh/config
+          rm temp_ssh_config
+
+      - name: Test SSH connection
         env:
           SERVER_USER: ${{secrets.SSH_USER}}
           TUNNEL_HOSTNAME: ${{secrets.SSH_HOST}}
