@@ -28,16 +28,17 @@ jobs:
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-      - name: Generate and Clean SSH Config with cloudflared
+      - name: Manually Configure SSH for Cloudflare Tunnel
         env:
+          SERVER_USER: ${{secrets.SSH_USER}}
           TUNNEL_HOSTNAME: ${{secrets.SSH_HOST}}
         run: |
-          # Capture SSH config from cloudflared into a temporary file
-          cloudflared access ssh-config --hostname $TUNNEL_HOSTNAME > temp_ssh_config
-
-          # Filter out incompatible lines and append cleaned config to ~/.ssh/config
-          grep -v '^add ' temp_ssh_config >> ~/.ssh/config
-          rm temp_ssh_config
+          # Manually set up SSH config to use cloudflared as ProxyCommand
+          echo "Host $TUNNEL_HOSTNAME" >> ~/.ssh/config
+          echo "  HostName $TUNNEL_HOSTNAME" >> ~/.ssh/config
+          echo "  User $SERVER_USER" >> ~/.ssh/config
+          echo "  IdentityFile ~/.ssh/id_rsa" >> ~/.ssh/config
+          echo "  ProxyCommand cloudflared access ssh --hostname %h" >> ~/.ssh/config
 
       - name: Test SSH connection
         env:
