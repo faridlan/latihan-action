@@ -21,7 +21,7 @@ jobs:
 
       - name: Connect to the server via tunnel
         env:
-          TUNNEL_NAME: ${{secrets.TUNNEL_ID}}
+          TUNNEL_NAME: my-tunnel
           CREDENTIALS: ${{ secrets.CLOUDFLARE_TUNNEL_CREDENTIALS }}
         run: |
           mkdir -p ~/.cloudflared
