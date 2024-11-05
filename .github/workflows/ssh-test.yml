@@ -51,4 +51,4 @@ jobs:
           cd ~/.ssh
           pwd
           ls -a
-          docker container ls
+          cd /home/runner/.ssh/config
