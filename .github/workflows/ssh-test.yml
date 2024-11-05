@@ -1,4 +1,4 @@
-name: Connect via Cloudflare Named Tunnel
+name: CI
 
 on:
   push:
@@ -6,38 +6,26 @@ on:
       - main
 
 jobs:
-  connect:
+  test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Check out repository
         uses: actions/checkout@v4
 
       - name: Install cloudflared
         run: |
-          wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
-          sudo mv cloudflared-linux-amd64 /usr/local/bin/cloudflared
-          sudo chmod +x /usr/local/bin/cloudflared
+          curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o cloudflared
+          sudo chmod +x cloudflared
+          sudo mv cloudflared /usr/local/bin/
 
-      - name: Set up cloudflared credentials
+      - name: Connect to the server via tunnel
+        env:
+          TUNNEL_NAME: ${{secrets.TUNNEL_ID}}
+          CREDENTIALS: ${{ secrets.CLOUDFLARE_TUNNEL_CREDENTIALS }}
         run: |
           mkdir -p ~/.cloudflared
-          echo "${{ secrets.CLOUDFLARE_TUNNEL_CREDENTIALS }}" > ~/.cloudflared/${{secrets.TUNNEL_ID}}.json
+          echo "$CREDENTIALS" > ~/.cloudflared/${TUNNEL_NAME}.json
+          cloudflared tunnel --config /etc/cloudflared/config.yml run ${TUNNEL_NAME}
 
-      - name: Start Cloudflare Tunnel Replace with your Tunnel ID
-        run: |
-          cloudflared tunnel --credentials-file ~/.cloudflared/${{secrets.TUNNEL_ID}}.json run ${{secrets.TUNNEL_ID}} &
-
-      - name: Setup SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-
-      - name: Add Server to Known Hosts
-        run: |
-          ssh-keyscan -H ${{secrets.SSH_HOST}} >> ~/.ssh/known_hosts
-
-      - name: Run commands via SSH
-        run: |
-          ssh -o "ProxyCommand cloudflared access ssh --hostname %h" ${{secrets.SSH_USER}}@${{secrets.SSH_HOST}} "echo 'Connected via Cloudflare tunnel!'"
+      # Additional steps like running tests, deploying, etc.
