@@ -1,4 +1,4 @@
-name: CI
+name: SSH Access Through Cloudflare Tunnel
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  test:
+  ssh_via_cloudflare:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,13 +19,26 @@ jobs:
           sudo chmod +x cloudflared
           sudo mv cloudflared /usr/local/bin/
 
-      - name: Connect to the server via tunnel
+      - name: Set up SSH key
         env:
-          TUNNEL_NAME: my-tunnel
-          CREDENTIALS: ${{ secrets.CLOUDFLARE_TUNNEL_CREDENTIALS }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
-          mkdir -p ~/.cloudflared
-          echo "$CREDENTIALS" > ~/.cloudflared/${TUNNEL_NAME}.json
-          cloudflared tunnel --config /etc/cloudflared/config.yml run ${TUNNEL_NAME}
+          # Set up SSH key in ~/.ssh directory
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
 
-      # Additional steps like running tests, deploying, etc.
+      - name: Generate SSH config with cloudflared
+        env:
+          TUNNEL_HOSTNAME: ${{secrets.SSH_HOST}}
+        run: |
+          # Use cloudflared to generate SSH config and append to ~/.ssh/config
+          cloudflared access ssh-config --hostname $TUNNEL_HOSTNAME >> ~/.ssh/config
+
+      - name: Test SSH connection
+        env:
+          SERVER_USER: ${{secrets.SSH_USER}}
+          TUNNEL_HOSTNAME: ${{secrets.SSH_HOST}}
+        run: |
+          # Connect to the server through SSH using the Cloudflare tunnel
+          ssh -o StrictHostKeyChecking=no $SERVER_USER@$TUNNEL_HOSTNAME "echo 'SSH connection successful'"
