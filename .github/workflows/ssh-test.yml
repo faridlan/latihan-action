@@ -23,28 +23,26 @@ jobs:
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
-          # Set up SSH key in ~/.ssh directory
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-      - name: Manually Configure SSH for Cloudflare Tunnel
+      - name: Test SSH connection with ProxyCommand
         env:
-          SERVER_USER: ${{secrets.SSH_USER}}
-          TUNNEL_HOSTNAME: ${{secrets.SSH_HOST}}
+          SERVER_USER: ${{ secrets.SSH_USER }}
+          TUNNEL_HOSTNAME: ${{ secrets.SSH_HOST }}
         run: |
-          # Manually set up SSH config to use cloudflared as ProxyCommand
-          echo "Host $TUNNEL_HOSTNAME" >> ~/.ssh/config
-          echo "  HostName $TUNNEL_HOSTNAME" >> ~/.ssh/config
-          echo "  User $SERVER_USER" >> ~/.ssh/config
-          echo "  IdentityFile ~/.ssh/id_rsa" >> ~/.ssh/config
-          echo "  ProxyCommand cloudflared access ssh --hostname %h" >> ~/.ssh/config
+          # Attempt SSH with ProxyCommand directly
+          ssh -v -o StrictHostKeyChecking=no \
+              -o "ProxyCommand=cloudflared access ssh --hostname %h" \
+              $SERVER_USER@$TUNNEL_HOSTNAME "echo 'SSH connection successful'"
 
-      - name: Test SSH connection
+      - name: Test Connection with Additional Commands
         env:
-          SERVER_USER: ${{secrets.SSH_USER}}
-          TUNNEL_HOSTNAME: ${{secrets.SSH_HOST}}
+          SERVER_USER: ${{ secrets.SSH_USER }}
+          TUNNEL_HOSTNAME: ${{ secrets.SSH_HOST }}
         run: |
-          # Connect to the server through SSH using the Cloudflare tunnel
-          ssh $SERVER_USER@$TUNNEL_HOSTNAME "echo 'SSH connection successful'"
-          pwd
+          # Run a command to check the current user on the server
+          ssh -v -o StrictHostKeyChecking=no \
+              -o "ProxyCommand=cloudflared access ssh --hostname %h" \
+              $SERVER_USER@$TUNNEL_HOSTNAME "whoami && pwd && hostname"
