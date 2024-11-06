@@ -38,5 +38,6 @@ jobs:
               -o "ProxyCommand=cloudflared access ssh --hostname %h" \
               $SERVER_USER@$TUNNEL_HOSTNAME "
                 echo 'Starting Docker container on remote server...';
-                docker container ls -a;
+                docker container ls;
+                docker container stop hello;
                 docker container ls;"
