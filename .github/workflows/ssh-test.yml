@@ -46,10 +46,5 @@ jobs:
           TUNNEL_HOSTNAME: ${{secrets.SSH_HOST}}
         run: |
           # Connect to the server through SSH using the Cloudflare tunnel
-          ssh -o StrictHostKeyChecking=no $SERVER_USER@$TUNNEL_HOSTNAME "echo 'SSH connection successful'"
+          ssh $SERVER_USER@$TUNNEL_HOSTNAME "echo 'SSH connection successful'"
           pwd
-          cut -d: -f1 /etc/passwd
-          cd ~/.ssh
-          ls -a
-          cat config
-          cat known_hosts
