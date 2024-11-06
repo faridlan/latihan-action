@@ -49,3 +49,5 @@ jobs:
           ssh -o StrictHostKeyChecking=no $SERVER_USER@$TUNNEL_HOSTNAME "echo 'SSH connection successful'"
           pwd
           cut -d: -f1 /etc/passwd
+          cd ~/.ssh
+          ls -a
