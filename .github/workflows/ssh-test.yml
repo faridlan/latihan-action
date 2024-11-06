@@ -39,5 +39,5 @@ jobs:
               $SERVER_USER@$TUNNEL_HOSTNAME "
                 echo 'Starting Docker container on remote server...';
                 docker container ls;
-                docker container stop hello;
+                docker container start hello;
                 docker container ls;"
