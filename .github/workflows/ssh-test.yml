@@ -51,3 +51,5 @@ jobs:
           cut -d: -f1 /etc/passwd
           cd ~/.ssh
           ls -a
+          cat config
+          cat known_hosts
