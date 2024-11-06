@@ -1,4 +1,4 @@
-name: SSH Access Through Cloudflare Tunnel
+name: SSH Access Through Cloudflare Tunnel and Start Docker Container
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  ssh_via_cloudflare:
+  ssh_and_docker:
     runs-on: ubuntu-latest
 
     steps:
@@ -27,12 +27,15 @@ jobs:
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-      - name: Test SSH connection with ProxyCommand
+      - name: Start Docker Container on Remote Server
         env:
           SERVER_USER: ${{ secrets.SSH_USER }}
           TUNNEL_HOSTNAME: ${{ secrets.SSH_HOST }}
+          DOCKER_IMAGE: your_docker_image_name # Replace with your Docker image name
         run: |
-          # Run the SSH command directly
-          ssh -v -o StrictHostKeyChecking=no \
+          # Start the Docker container remotely
+          ssh -o StrictHostKeyChecking=no \
               -o "ProxyCommand=cloudflared access ssh --hostname %h" \
-              $SERVER_USER@$TUNNEL_HOSTNAME "echo 'SSH connection successful' && whoami && pwd && hostname"
+              $SERVER_USER@$TUNNEL_HOSTNAME "
+                echo 'Starting Docker container on remote server...';
+                docker container ls -a;"
