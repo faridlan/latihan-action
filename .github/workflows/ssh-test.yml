@@ -27,14 +27,12 @@ jobs:
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-      - name: Test Connection with Additional Commands
+      - name: Test SSH connection with ProxyCommand
         env:
           SERVER_USER: ${{ secrets.SSH_USER }}
           TUNNEL_HOSTNAME: ${{ secrets.SSH_HOST }}
         run: |
-          # Run a command to check the current user on the server
+          # Run the SSH command directly
           ssh -v -o StrictHostKeyChecking=no \
               -o "ProxyCommand=cloudflared access ssh --hostname %h" \
-              $SERVER_USER@$TUNNEL_HOSTNAME "whoami && pwd && hostname"
-          pwd
-          whoami
+              $SERVER_USER@$TUNNEL_HOSTNAME "echo 'SSH connection successful' && whoami && pwd && hostname"
